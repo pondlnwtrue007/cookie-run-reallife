@@ -1,12 +1,33 @@
-# Cookie Run Real-Life 🍪🏃
+<div align="center">
 
-เล่น **Cookie Run classic** บน **MuMuPlayer** ด้วยการเคลื่อนไหวร่างกายจริง
-**กระโดดจริง → ตัวละครกระโดด** | **ย่อตัวจริง → ตัวละครสไลด์**
+<img src="docs/logo.png" width="120" alt="Cookie Run Real-Life">
 
-ใช้เว็บแคม + MediaPipe Pose จับท่าทาง แล้วส่งปุ่มคีย์บอร์ดเข้าเกมผ่าน keymapping ของ MuMu
+# Cookie Run Real-Life 🍪
 
-> 🎨 **โปรเจกต์ FAN-MADE** ทำเองเพื่อความสนุก · **แจกฟรี ห้ามนำไปขาย/หากำไร** · ไม่มีส่วนเกี่ยวข้องกับ Devsisters
-> "Cookie Run" เป็นลิขสิทธิ์ของ Devsisters Corp. (ดูรายละเอียดในไฟล์ [LICENSE](LICENSE))
+**เล่น Cookie Run ด้วยการกระโดด/ย่อจริงผ่านเว็บแคม**
+กระโดดจริง → ตัวละครกระโดด · ย่อตัวจริง → ตัวละครสไลด์
+
+[![Release](https://img.shields.io/github/v/release/pondlnwtrue007/cookie-run-reallife?label=release&color=ff7043)](../../releases/latest)
+[![Windows](https://img.shields.io/badge/platform-Windows-0078D6?logo=windows&logoColor=white)](../../releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/pondlnwtrue007/cookie-run-reallife/total?color=2ea44f&label=downloads)](../../releases)
+[![License](https://img.shields.io/badge/license-non--commercial-orange)](LICENSE)
+[![MediaPipe](https://img.shields.io/badge/AI-MediaPipe%20Pose-00897b)](https://developers.google.com/mediapipe)
+
+### ➡️ [ ⬇️ ดาวน์โหลดสำหรับ Windows ](../../releases/latest) ⬅️
+
+<sub>🎨 FAN-MADE · แจกฟรี ห้ามนำไปขาย/หากำไร · ไม่เกี่ยวข้องกับ Devsisters — ดู [LICENSE](LICENSE)</sub>
+
+</div>
+
+---
+
+## 🎬 หน้าตาแอป
+
+<div align="center">
+<img src="docs/app-screenshot.png" width="720" alt="Cookie Run Real-Life app screenshot">
+</div>
+
+> เลือกกล้อง → ตั้งท่ายืน → กดปุ่มเขียว **"เล่นจริง"** → กระโดด/ย่อหน้ากล้อง! · มี **แถบไกด์สีฟ้า** บอกทุกขั้น + **ตัวนับ 🦘/🛝** ให้เห็นว่าจับท่าได้จริง
 
 ---
 
