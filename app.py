@@ -452,9 +452,15 @@ class App(tk.Tk):
     def _tick(self):
         w = self.worker
         if w.error:
-            messagebox.showerror("ผิดพลาด", w.error)
+            err = w.error
             w.error = None
-            self.toggle_start()  # reset เป็นหยุด
+            messagebox.showerror("ผิดพลาด", err)
+            # reset เป็นสถานะ "หยุด" (ไม่ใช่รีสตาร์ท) กันวนลูป error
+            w.stop()
+            self.start_btn.configure(text="▶ เริ่ม", bg=GREEN, fg="#10240f")
+            self.cam_combo.configure(state="readonly")
+            self._show_placeholder()
+            self.set_status("หยุดแล้ว (มีข้อผิดพลาด)")
         frame = w.get_frame()
         if frame is not None:
             self._set_image(frame)
