@@ -13,7 +13,11 @@
 [![License](https://img.shields.io/badge/license-non--commercial-orange)](LICENSE)
 [![MediaPipe](https://img.shields.io/badge/AI-MediaPipe%20Pose-00897b)](https://developers.google.com/mediapipe)
 
-### ➡️ [ ⬇️ ดาวน์โหลดสำหรับ Windows ](https://github.com/pondlnwtrue007/cookie-run-reallife/releases/latest/download/Cookie.Run.Real-Life.exe) ⬅️
+<a href="https://github.com/pondlnwtrue007/cookie-run-reallife/releases/latest/download/Cookie.Run.Real-Life.exe">
+  <img src="https://img.shields.io/badge/%E2%AC%87_DOWNLOAD-Windows_.exe-2ea44f?style=for-the-badge&logo=windows&logoColor=white" alt="ดาวน์โหลดสำหรับ Windows" height="46">
+</a>
+
+<sub>คลิกปุ่มด้านบนเพื่อโหลด `Cookie.Run.Real-Life.exe` ทันที (~187MB)</sub>
 
 <sub>🎨 FAN-MADE · แจกฟรี ห้ามนำไปขาย/หากำไร · ไม่เกี่ยวข้องกับ Devsisters — ดู [LICENSE](LICENSE)</sub>
 
