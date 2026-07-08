@@ -13,7 +13,7 @@
 [![License](https://img.shields.io/badge/license-non--commercial-orange)](LICENSE)
 [![MediaPipe](https://img.shields.io/badge/AI-MediaPipe%20Pose-00897b)](https://developers.google.com/mediapipe)
 
-### ➡️ [ ⬇️ ดาวน์โหลดสำหรับ Windows ](../../releases/latest) ⬅️
+### ➡️ [ ⬇️ ดาวน์โหลดสำหรับ Windows ](https://github.com/pondlnwtrue007/cookie-run-reallife/releases/latest/download/Cookie.Run.Real-Life.exe) ⬅️
 
 <sub>🎨 FAN-MADE · แจกฟรี ห้ามนำไปขาย/หากำไร · ไม่เกี่ยวข้องกับ Devsisters — ดู [LICENSE](LICENSE)</sub>
 
@@ -33,7 +33,7 @@
 
 ## ⬇️ โหลดแล้วเล่นเลย (สำหรับคนทั่วไป)
 
-1. ไปที่หน้า **[Releases](../../releases)** (เมนูขวาของหน้า repo) → โหลดไฟล์ **.exe** (ชื่อ `Cookie.Run.Real-Life.exe`) ในหัวข้อ Assets
+1. คลิก **[⬇️ ดาวน์โหลด Cookie.Run.Real-Life.exe](https://github.com/pondlnwtrue007/cookie-run-reallife/releases/latest/download/Cookie.Run.Real-Life.exe)** (โหลดไฟล์ทันที ~187MB) — หรือดูทุกเวอร์ชันที่หน้า [Releases](../../releases)
 2. **ดับเบิลคลิกไฟล์ที่โหลดมา** → ถ้า Windows เด้ง UAC ให้กด **Yes** (โปรแกรมขอสิทธิ์เพื่อส่งปุ่มเข้าเกม)
    - ถ้า SmartScreen เตือน "Windows protected your PC" → กด **More info → Run anyway**
 3. รอ ~15-20 วิ (ครั้งแรกแตกไฟล์) → แอปเปิดขึ้นมา → **ทำตามแถบไกด์สีฟ้าในแอป** ได้เลย:
