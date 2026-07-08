@@ -1,0 +1,8 @@
+# mediapipe ดึง opencv-contrib-python + numpy + pillow มาให้เอง จึงไม่ระบุซ้ำ (กันติดตั้งซ้อน)
+mediapipe>=0.10.14
+pydirectinput>=1.0.4
+pygrabber>=0.2          # ดึงรายชื่อกล้อง (แอป GUI)
+pillow>=9              # แสดงภาพกล้องในหน้าต่างแอป
+
+# --- สำหรับ build เป็น .exe เท่านั้น (ไม่จำเป็นตอนรันปกติ) ---
+# pyinstaller>=6.0

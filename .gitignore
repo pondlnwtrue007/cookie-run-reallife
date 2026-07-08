@@ -1,0 +1,16 @@
+# build artifacts (ตัว exe ใหญ่เกินลิมิต GitHub → อยู่ใน Releases แทน)
+build/
+dist/
+*.spec.bak
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+
+# ค่าที่ผู้ใช้ตั้งเอง (เก็บใน %LOCALAPPDATA% อยู่แล้ว แต่กันไว้)
+settings.json
+
+# ไฟล์ระบบ
+Thumbs.db
+desktop.ini
