@@ -25,6 +25,7 @@ except Exception:
 from paths import resource_path
 from settings import Settings
 from camera import CameraStream, list_cameras
+from winfocus import target_focused
 from pose_detector import PoseDetector
 from motion_logic import MotionLogic, STATE_JUMP, STATE_CROUCH, STATE_FLY
 from input_sender import InputSender
@@ -86,6 +87,7 @@ class DetectionWorker:
         self.error = None
         self.backend_name = None
         self.cam_size = (0, 0)
+        self.window_ok = True   # หน้าต่างเกม (MuMu) active อยู่ไหม (ตอนโหมดจริง)
 
     def start(self, index):
         self.stop()
@@ -136,15 +138,21 @@ class DetectionWorker:
                 pose = self.det.process(rgb)
 
                 event = self.logic.update(pose)
-                if event == "jump":
+                # ส่งปุ่มเฉพาะตอนหน้าต่างเกม (MuMu) active — กันปุ่มรั่วไป OBS/เว็บ/แอปอื่น
+                # (โหมดทดสอบไม่สนหน้าต่าง เพราะไม่ส่งปุ่มจริงอยู่แล้ว)
+                focused = self.sender.dry_run or target_focused(self.s.TARGET_WINDOW)
+                self.window_ok = focused
+                # กระโดด (แตะครั้งเดียว)
+                if event == "jump" and focused:
                     self.sender.jump()
-                elif event == "crouch_start":
+                # สไลด์/บิน (กดค้าง) — sync ตามสถานะทุกเฟรม: ถ้าหลุดโฟกัสให้ปล่อยปุ่มค้าง
+                if self.logic.crouching and focused:
                     self.sender.crouch_start()
-                elif event == "crouch_end":
+                else:
                     self.sender.crouch_end()
-                elif event == "fly_start":
+                if self.logic.flying and focused:
                     self.sender.fly_start()
-                elif event == "fly_end":
+                else:
                     self.sender.fly_end()
 
                 self.det.draw(frame, pose)
@@ -235,6 +243,7 @@ class App(tk.Tk):
             pass
 
         self.s = Settings.load()
+        self.s.DRY_RUN = True   # เปิดมาเป็นโหมดทดสอบเสมอ (กันส่งปุ่มมั่วตอนเพิ่งเปิด)
         self.worker = DetectionWorker(self.s)
         self.cameras = []            # list ของ (index, name)
         self._imgtk = None           # กัน GC ของภาพ
@@ -361,6 +370,19 @@ class App(tk.Tk):
                           state="readonly", width=10, font=f)
         cc.pack(side="left"); cc.bind("<<ComboboxSelected>>", self.on_key_change)
 
+        # หน้าต่างเป้าหมาย — ส่งปุ่มเฉพาะตอนหน้าต่างนี้ active (กันปุ่มรั่ว)
+        tw = tk.Frame(panel, bg=PANEL)
+        tw.pack(fill="x", padx=14, pady=(2, 0))
+        tk.Label(tw, text="ส่งปุ่มเฉพาะหน้าต่าง:", bg=PANEL, fg=MUTED,
+                 font=(UIFONT, 9)).pack(side="left")
+        self.target_win_var = tk.StringVar(value=self.s.TARGET_WINDOW)
+        te = tk.Entry(tw, textvariable=self.target_win_var, width=10, font=(UIFONT, 9),
+                      bg="#1e1f26", fg=FG, insertbackground=FG, relief="flat")
+        te.pack(side="left", padx=4)
+        te.bind("<KeyRelease>", self.on_target_change)
+        tk.Label(tw, text="(ว่าง = ส่งตลอด)", bg=PANEL, fg=MUTED,
+                 font=(UIFONT, 8)).pack(side="left")
+
         # วิธีใช้
         tk.Button(panel, text="❓ วิธีใช้ / ตั้งค่าเส้น", command=self.show_help,
                   font=f, relief="flat", bg="#3a3d4a", fg=FG, pady=5).pack(
@@ -452,9 +474,15 @@ class App(tk.Tk):
             self.mode_btn.configure(text="▶  คลิกตรงนี้เพื่อเล่นจริง",
                                     bg=GREEN, fg="#0d2410")
         else:
-            self.mode_status.configure(
-                text="🟢 ตอนนี้: เล่นจริง  (กำลังส่งปุ่มเข้าเกม)",
-                bg="#17361f", fg="#8effab")
+            if self.worker.running and not self.worker.window_ok:
+                # เล่นจริงแต่ยังไม่ได้อยู่หน้าต่าง MuMu -> ยังไม่ส่งปุ่ม (กันรั่ว)
+                self.mode_status.configure(
+                    text="🟡 เล่นจริง · รอสลับไปหน้าต่าง MuMu (ตอนนี้ยังไม่ส่งปุ่ม)",
+                    bg="#4a4320", fg="#ffe08a")
+            else:
+                self.mode_status.configure(
+                    text="🟢 ตอนนี้: เล่นจริง  (กำลังส่งปุ่มเข้าเกม)",
+                    bg="#17361f", fg="#8effab")
             self.mode_btn.configure(text="⏸  คลิกเพื่อกลับไปโหมดทดสอบ",
                                     bg="#3a3d4a", fg=FG)
 
@@ -482,6 +510,9 @@ class App(tk.Tk):
         self.s.JUMP_KEY = self.jump_key_var.get()
         self.s.CROUCH_KEY = self.crouch_key_var.get()
         self.set_status(f"ปุ่ม: กระโดด={self.s.JUMP_KEY}  สไลด์={self.s.CROUCH_KEY}")
+
+    def on_target_change(self, _e=None):
+        self.s.TARGET_WINDOW = self.target_win_var.get().strip()
 
     def set_status(self, text):
         self.status.configure(text="  " + text)
@@ -571,6 +602,7 @@ class App(tk.Tk):
         self.worker.sync_to_settings()
         self.s.JUMP_KEY = self.jump_key_var.get()
         self.s.CROUCH_KEY = self.crouch_key_var.get()
+        self.s.TARGET_WINDOW = self.target_win_var.get().strip()
         self.worker.stop()
         self.s.save()
         self.destroy()

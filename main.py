@@ -25,6 +25,7 @@ except Exception:
 
 import config as cfg
 from camera import CameraStream
+from winfocus import target_focused
 from pose_detector import PoseDetector
 from motion_logic import MotionLogic, STATE_JUMP, STATE_CROUCH
 from input_sender import InputSender
@@ -147,15 +148,17 @@ def main():
             pose = detector.process(rgb)
 
             event = logic.update(pose)
-            if event == "jump":
+            # ส่งปุ่มเฉพาะตอนหน้าต่างเกม (MuMu) active — กันปุ่มรั่วไปแอปอื่น
+            focused = sender.dry_run or target_focused(cfg.TARGET_WINDOW)
+            if event == "jump" and focused:
                 sender.jump()
-            elif event == "crouch_start":
+            if logic.crouching and focused:
                 sender.crouch_start()
-            elif event == "crouch_end":
+            else:
                 sender.crouch_end()
-            elif event == "fly_start":
+            if logic.flying and focused:
                 sender.fly_start()
-            elif event == "fly_end":
+            else:
                 sender.fly_end()
 
             # คำนวณ FPS

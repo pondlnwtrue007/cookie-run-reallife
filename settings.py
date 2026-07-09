@@ -26,6 +26,7 @@ DEFAULTS = {
     # ปุ่มที่ส่งเข้าเกม
     "JUMP_KEY": "space",
     "CROUCH_KEY": "ctrl",
+    "TARGET_WINDOW": "MuMu",  # ส่งปุ่มเฉพาะตอนหน้าต่างนี้ active ("" = ส่งตลอด)
     # ความไว / เส้น
     "JUMP_THRESHOLD": 0.18,
     "CROUCH_THRESHOLD": 0.18,
