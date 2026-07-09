@@ -23,18 +23,24 @@ class InputSender:
         self.cfg = cfg
         self.dry_run = cfg.DRY_RUN
         self._crouch_held = False
+        self._fly_held = False
         # ตัวนับ ให้ UI โชว์ว่าตรวจจับ/ส่งปุ่มไปกี่ครั้ง (นับทั้งโหมดทดสอบและจริง)
         self.jump_count = 0
         self.crouch_count = 0
+        self.fly_count = 0
 
     def toggle_dry_run(self):
-        # ถ้ากำลังกดสไลด์ค้างอยู่ ให้ปล่อยก่อนสลับโหมด กันปุ่มค้าง
+        # ถ้ากำลังกดค้างอยู่ ให้ปล่อยก่อนสลับโหมด กันปุ่มค้าง
         if self._crouch_held:
             self.crouch_end()
+        if self._fly_held:
+            self.fly_end()
         self.dry_run = not self.dry_run
         return self.dry_run
 
     def jump(self):
+        if self._fly_held:
+            return  # กำลังบิน (space ค้างอยู่) ห้ามแตะซ้ำ = กันร่วงกลางคัน
         self.jump_count += 1
         if self.dry_run:
             print("[DRY] JUMP  -> tap", self.cfg.JUMP_KEY)
@@ -63,8 +69,34 @@ class InputSender:
             return
         pydirectinput.keyUp(self.cfg.CROUCH_KEY)
 
+    # ---------- บิน: กด "ปุ่มกระโดด (space)" ค้าง ----------
+    def fly_start(self):
+        if self._fly_held:
+            return
+        # ถ้ากำลังสไลด์ค้างอยู่ ปล่อยก่อน กัน ctrl ค้าง
+        if self._crouch_held:
+            self.crouch_end()
+        self._fly_held = True
+        self.fly_count += 1
+        if self.dry_run:
+            print("[DRY] FLY start -> hold", self.cfg.JUMP_KEY)
+            return
+        pydirectinput.keyDown(self.cfg.JUMP_KEY)
+
+    def fly_end(self):
+        if not self._fly_held:
+            return
+        self._fly_held = False
+        if self.dry_run:
+            print("[DRY] FLY end   -> release", self.cfg.JUMP_KEY)
+            return
+        pydirectinput.keyUp(self.cfg.JUMP_KEY)
+
     def cleanup(self):
         """ปล่อยปุ่มค้างทั้งหมดตอนปิดโปรแกรม กันปุ่มค้าง"""
+        if self._fly_held and not self.dry_run:
+            pydirectinput.keyUp(self.cfg.JUMP_KEY)
+        self._fly_held = False
         if self._crouch_held and not self.dry_run:
             pydirectinput.keyUp(self.cfg.CROUCH_KEY)
         self._crouch_held = False

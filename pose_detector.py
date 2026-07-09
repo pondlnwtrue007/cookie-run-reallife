@@ -29,14 +29,20 @@ MODEL_URL = (
 
 # index ของ landmark (ตาม MediaPipe Pose 33 จุด)
 L_SHOULDER, R_SHOULDER = 11, 12
+L_ELBOW, R_ELBOW = 13, 14
+L_WRIST, R_WRIST = 15, 16
 L_HIP, R_HIP = 23, 24
 
-# คู่จุดสำหรับวาดโครงลำตัวคร่าวๆ ในหน้าต่าง debug
+# คู่จุดสำหรับวาดโครงลำตัว + แขน ในหน้าต่าง debug
 _TORSO_CONNECTIONS = [
     (L_SHOULDER, R_SHOULDER),
     (L_HIP, R_HIP),
     (L_SHOULDER, L_HIP),
     (R_SHOULDER, R_HIP),
+]
+_ARM_CONNECTIONS = [
+    (L_SHOULDER, L_ELBOW), (L_ELBOW, L_WRIST),
+    (R_SHOULDER, R_ELBOW), (R_ELBOW, R_WRIST),
 ]
 
 
@@ -64,11 +70,14 @@ def ensure_model():
 class PoseResult:
     """ผลลัพธ์ต่อ 1 เฟรม"""
 
-    def __init__(self, found, torso_y=None, torso_len=None, landmarks=None):
+    def __init__(self, found, torso_y=None, torso_len=None, landmarks=None,
+                 wrist_lift=0.0, arm_span=0.0):
         self.found = found          # เจอคนในเฟรมไหม
         self.torso_y = torso_y      # ตำแหน่งแนวตั้งของลำตัว (normalized 0..1)
         self.torso_len = torso_len  # ความยาวลำตัว (normalized)
         self.landmarks = landmarks  # list ของ landmark คนแรก (ไว้วาด)
+        self.wrist_lift = wrist_lift  # ข้อมือสูง/ต่ำเทียบไหล่ (หาร torso_len) — จับการกระพือ
+        self.arm_span = arm_span      # ระยะแขนกางซ้าย-ขวา (หาร torso_len) — จับท่า T
 
 
 class PoseDetector:
@@ -110,7 +119,13 @@ class PoseDetector:
         if torso_len < 1e-3:
             torso_len = 1e-3
 
-        return PoseResult(found=True, torso_y=torso_y, torso_len=torso_len, landmarks=pts)
+        # ท่าแขน (ไว้จับ "บิน") — normalize ด้วย torso_len ให้ไม่ขึ้นกับระยะกล้อง
+        wrist_y = (pts[L_WRIST].y + pts[R_WRIST].y) / 2.0
+        wrist_lift = (shoulder_y - wrist_y) / torso_len       # + = ข้อมือสูงกว่าไหล่
+        arm_span = abs(pts[L_WRIST].x - pts[R_WRIST].x) / torso_len
+
+        return PoseResult(found=True, torso_y=torso_y, torso_len=torso_len,
+                          landmarks=pts, wrist_lift=wrist_lift, arm_span=arm_span)
 
     def draw(self, bgr_frame, pose_result: PoseResult):
         """วาด landmark + โครงลำตัวคร่าวๆ ลงบนภาพ BGR (หน้าต่าง debug)"""
@@ -124,6 +139,12 @@ class PoseDetector:
             ax, ay = int(pts[a].x * w), int(pts[a].y * h)
             bx, by = int(pts[b].x * w), int(pts[b].y * h)
             cv2.line(bgr_frame, (ax, ay), (bx, by), (0, 255, 0), 2)
+
+        # เส้นแขน (ไหล่-ศอก-ข้อมือ) — สีฟ้า ให้เห็นการจับปีกตอนบิน
+        for a, b in _ARM_CONNECTIONS:
+            ax, ay = int(pts[a].x * w), int(pts[a].y * h)
+            bx, by = int(pts[b].x * w), int(pts[b].y * h)
+            cv2.line(bgr_frame, (ax, ay), (bx, by), (255, 200, 0), 2)
 
         # จุด landmark ทั้งหมด
         for lm in pts:

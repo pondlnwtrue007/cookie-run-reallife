@@ -153,6 +153,10 @@ def main():
                 sender.crouch_start()
             elif event == "crouch_end":
                 sender.crouch_end()
+            elif event == "fly_start":
+                sender.fly_start()
+            elif event == "fly_end":
+                sender.fly_end()
 
             # คำนวณ FPS
             now = cv2.getTickCount()

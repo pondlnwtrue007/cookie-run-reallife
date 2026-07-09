@@ -26,7 +26,7 @@ from paths import resource_path
 from settings import Settings
 from camera import CameraStream, list_cameras
 from pose_detector import PoseDetector
-from motion_logic import MotionLogic, STATE_JUMP, STATE_CROUCH
+from motion_logic import MotionLogic, STATE_JUMP, STATE_CROUCH, STATE_FLY
 from input_sender import InputSender
 
 # สี (ธีมมืด)
@@ -39,6 +39,7 @@ ORANGE = "#ff9f40"
 GREY = "#c8c8d4"
 RED = "#ff4d4d"
 ACCENT = "#5b8cff"
+CYAN = "#33d6e0"
 
 # ปุ่มที่เลือกส่งเข้าเกมได้
 KEY_CHOICES = ["space", "ctrl", "shift", "alt", "up", "down", "left", "right",
@@ -137,6 +138,10 @@ class DetectionWorker:
                     self.sender.crouch_start()
                 elif event == "crouch_end":
                     self.sender.crouch_end()
+                elif event == "fly_start":
+                    self.sender.fly_start()
+                elif event == "fly_end":
+                    self.sender.fly_end()
 
                 self.det.draw(frame, pose)
                 draw_lines(frame, self.logic)
@@ -193,8 +198,9 @@ class DetectionWorker:
 
     def counts(self):
         if self.sender:
-            return self.sender.jump_count, self.sender.crouch_count
-        return 0, 0
+            return (self.sender.jump_count, self.sender.crouch_count,
+                    self.sender.fly_count)
+        return 0, 0, 0
 
     def move_line(self, which, up):
         if not self.logic:
@@ -279,7 +285,7 @@ class App(tk.Tk):
         self.fps_lbl = tk.Label(panel, text="", bg=PANEL, fg=MUTED, font=("Segoe UI", 9))
         self.fps_lbl.pack()
         # ตัวนับ — เห็นชัดว่าตรวจจับ/ส่งปุ่มไปกี่ครั้ง (ทำงานจริงหรือเปล่า)
-        self.count_lbl = tk.Label(panel, text="🦘 กระโดด 0    🛝 สไลด์ 0", bg=PANEL,
+        self.count_lbl = tk.Label(panel, text="🦘 0   🛝 0   🕊️ 0", bg=PANEL,
                                   fg=FG, font=("Segoe UI", 11))
         self.count_lbl.pack(pady=(4, 0))
 
@@ -317,6 +323,20 @@ class App(tk.Tk):
                       command=lambda k=key: self.move_line(k, True)).pack(side="left", padx=2)
             tk.Button(row, text="▼", width=3, relief="flat", bg="#3a3d4a", fg=FG,
                       command=lambda k=key: self.move_line(k, False)).pack(side="left")
+
+        # ปรับโหมดบิน
+        flyf = tk.LabelFrame(panel, text=" 🕊️ โหมดบิน (กางแขนกระพือ+เด้ง) ", bg=PANEL,
+                             fg=CYAN, font=f, labelanchor="n", bd=1)
+        flyf.pack(fill="x", padx=14, pady=6)
+        for label, kind in [("ความไวกระพือ", "osc"), ("เวลาค้าง (วิ)", "delay")]:
+            row = tk.Frame(flyf, bg=PANEL)
+            row.pack(fill="x", pady=3, padx=6)
+            tk.Label(row, text=label, bg=PANEL, fg=FG, font=f, width=15,
+                     anchor="w").pack(side="left")
+            tk.Button(row, text="▲", width=3, relief="flat", bg="#3a3d4a", fg=FG,
+                      command=lambda k=kind: self.adjust_fly(k, +1)).pack(side="left", padx=2)
+            tk.Button(row, text="▼", width=3, relief="flat", bg="#3a3d4a", fg=FG,
+                      command=lambda k=kind: self.adjust_fly(k, -1)).pack(side="left")
 
         # ตั้งปุ่ม
         keys = tk.LabelFrame(panel, text=" ปุ่มที่ส่งเข้าเกม ", bg=PANEL, fg=FG,
@@ -440,6 +460,20 @@ class App(tk.Tk):
         else:
             self.set_status("กด ▶ เริ่ม ก่อน ค่อยปรับเส้น")
 
+    def adjust_fly(self, kind, direction):
+        """ปรับค่าโหมดบินสดๆ (motion_logic อ่าน settings สดทุกเฟรม)"""
+        if kind == "osc":
+            # ▲ = ไวขึ้น (ขยับนิดเดียวก็บิน) = ลดค่า amplitude
+            self.s.FLY_OSC_AMPLITUDE = round(
+                max(0.03, self.s.FLY_OSC_AMPLITUDE - direction * 0.02), 3)
+            self.set_status(f"ความไวกระพือ (osc): {self.s.FLY_OSC_AMPLITUDE} "
+                            f"(น้อย=ไวขึ้น)")
+        else:
+            # ▲ = ค้างนานขึ้น (ร่วงช้าลง)
+            self.s.FLY_RELEASE_DELAY = round(
+                max(0.1, self.s.FLY_RELEASE_DELAY + direction * 0.1), 2)
+            self.set_status(f"เวลาค้างก่อนร่วง: {self.s.FLY_RELEASE_DELAY} วิ")
+
     def on_key_change(self, _e=None):
         self.s.JUMP_KEY = self.jump_key_var.get()
         self.s.CROUCH_KEY = self.crouch_key_var.get()
@@ -483,7 +517,9 @@ class App(tk.Tk):
         # สถานะ
         if w.is_ready():
             st = w.state
-            if st == STATE_JUMP:
+            if st == STATE_FLY:
+                self.state_lbl.configure(text="FLY", fg=CYAN)
+            elif st == STATE_JUMP:
                 self.state_lbl.configure(text="JUMP", fg=GREEN)
             elif st == STATE_CROUCH:
                 self.state_lbl.configure(text="CROUCH", fg=ORANGE)
@@ -502,9 +538,9 @@ class App(tk.Tk):
 
             self.fps_lbl.configure(text=f"{w.fps:.0f} FPS · {w.backend_name} {w.cam_size[0]}x{w.cam_size[1]}")
 
-            # ตัวนับ jump/crouch (สีเขียวถ้าส่งจริง เทาถ้าโหมดทดสอบ)
-            jc, cc = w.counts()
-            self.count_lbl.configure(text=f"🦘 กระโดด {jc}    🛝 สไลด์ {cc}",
+            # ตัวนับ jump/crouch/fly (สีเขียวถ้าส่งจริง เทาถ้าโหมดทดสอบ)
+            jc, cc, fc = w.counts()
+            self.count_lbl.configure(text=f"🦘 {jc}   🛝 {cc}   🕊️ {fc}",
                                      fg=(GREEN if not w.dry_run() else MUTED))
         else:
             self.state_lbl.configure(text="—", fg=GREY)
@@ -554,6 +590,17 @@ HELP_TEXT = """🍪 วิธีเล่น Cookie Run ด้วยตัวจ
 • เส้น JUMP ห่าง STAND → ต้องกระโดดสูงขึ้น (ไวน้อยลง)
 • เส้น CROUCH เข้าใกล้ STAND → ย่อนิดเดียวก็สไลด์
 • ถ้าเส้น STAND ไม่ตรงระดับตัว ให้ Calibrate ใหม่
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+🕊️ ท่าบิน (ตอน Bonus Time)
+
+กางแขนสองข้าง (ท่า T) กระพือปีกขึ้น-ลง + เด้งตัวไปด้วยเรื่อยๆ
+ = กดกระโดดค้าง = บินขึ้น
+หยุดขยับ = ปล่อย = ร่วงลง  (ต้องขยับต่อเนื่องถึงจะบินอยู่)
+
+ปรับที่กล่อง "โหมดบิน":
+• ความไวกระพือ — ▲ ขยับนิดเดียวก็บิน / ▼ ต้องขยับแรงขึ้น
+• เวลาค้าง — หยุดขยับกี่วิถึงร่วง (▲ ร่วงช้า / ▼ ร่วงไว)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 ตั้งค่าใน MuMuPlayer (ทำครั้งเดียว)

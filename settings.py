@@ -34,6 +34,12 @@ DEFAULTS = {
     # จังหวะเวลา
     "JUMP_DEBOUNCE_SEC": 0.35,
     "CALIBRATION_SEC": 2.0,
+    # ท่าบิน (Bonus Time)
+    "FLY_ENABLED": True,
+    "FLY_ARM_SPAN_MIN": 1.4,
+    "FLY_OSC_AMPLITUDE": 0.15,
+    "FLY_RELEASE_DELAY": 0.1,
+    "FLY_WINDOW_SEC": 0.35,
     # โหมด
     "DRY_RUN": True,
 }
