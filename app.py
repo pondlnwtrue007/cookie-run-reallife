@@ -41,6 +41,10 @@ RED = "#ff4d4d"
 ACCENT = "#5b8cff"
 CYAN = "#33d6e0"
 
+# ฟอนต์ UI — Leelawadee UI มีตัวอักษรไทยในตัว (เรนเดอร์เหมือนกันทุกเครื่อง Win8+)
+# เดิมใช้ Segoe UI ที่ไม่มีตัวไทย → Windows สลับฟอนต์ให้เอง ทำให้ไทยดูอ้วน/ต่างกันแต่ละเครื่อง
+UIFONT = "Leelawadee UI"
+
 # ปุ่มที่เลือกส่งเข้าเกมได้
 KEY_CHOICES = ["space", "ctrl", "shift", "alt", "up", "down", "left", "right",
                "enter", "z", "x", "c", "a", "s", "d", "w", "q", "e", "f", "j", "k"]
@@ -242,8 +246,8 @@ class App(tk.Tk):
 
     # ---------- UI ----------
     def _build_ui(self):
-        f = ("Segoe UI", 11)
-        fb = ("Segoe UI Semibold", 11)
+        f = (UIFONT, 11)
+        fb = (UIFONT, 11, "bold")
 
         # แถบบน: เลือกกล้อง + Start/Stop
         top = tk.Frame(self, bg=BG)
@@ -274,26 +278,26 @@ class App(tk.Tk):
         # แถบไกด์ "ทำอะไรต่อ" — เปลี่ยนตามสถานะ ช่วยมือใหม่
         self.guide_lbl = tk.Label(panel, text="① เลือกกล้อง แล้วกด ▶ เริ่ม (มุมขวาบน)",
                                   bg="#33354a", fg="#dfe4ff",
-                                  font=("Segoe UI Semibold", 10),
+                                  font=(UIFONT, 10, "bold"),
                                   wraplength=280, justify="center", pady=8)
         self.guide_lbl.pack(fill="x", padx=14, pady=(12, 2))
 
         # สถานะใหญ่
         self.state_lbl = tk.Label(panel, text="—", bg=PANEL, fg=GREY,
-                                  font=("Segoe UI Black", 30), width=9)
+                                  font=(UIFONT, 30, "bold"), width=9)
         self.state_lbl.pack(pady=(14, 0))
-        self.fps_lbl = tk.Label(panel, text="", bg=PANEL, fg=MUTED, font=("Segoe UI", 9))
+        self.fps_lbl = tk.Label(panel, text="", bg=PANEL, fg=MUTED, font=(UIFONT, 9))
         self.fps_lbl.pack()
         # ตัวนับ — เห็นชัดว่าตรวจจับ/ส่งปุ่มไปกี่ครั้ง (ทำงานจริงหรือเปล่า)
         self.count_lbl = tk.Label(panel, text="🦘 0   🛝 0   🕊️ 0", bg=PANEL,
-                                  fg=FG, font=("Segoe UI", 11))
+                                  fg=FG, font=(UIFONT, 11))
         self.count_lbl.pack(pady=(4, 0))
 
         # ===== โหมด: ป้ายสถานะ (บอกว่าอยู่โหมดไหน) + ปุ่มสั่ง (บอกว่าคลิกแล้วเกิดอะไร) =====
-        self.mode_status = tk.Label(panel, text="", font=("Segoe UI Semibold", 11), pady=6)
+        self.mode_status = tk.Label(panel, text="", font=(UIFONT, 11, "bold"), pady=6)
         self.mode_status.pack(fill="x", padx=14, pady=(14, 0))
         self.mode_btn = tk.Button(panel, text="", command=self.toggle_mode,
-                                  font=("Segoe UI Semibold", 13), relief="flat",
+                                  font=(UIFONT, 13, "bold"), relief="flat",
                                   pady=12, cursor="hand2")
         self.mode_btn.pack(fill="x", padx=14, pady=(4, 6))
         self._update_mode_ui()
@@ -304,7 +308,7 @@ class App(tk.Tk):
                                    bg=ACCENT, fg="#0a1533", padx=8, pady=6)
         self.calib_btn.pack(fill="x", padx=14, pady=6)
         self.calib_hint = tk.Label(panel, text="ยืนตรงหน้ากล้องแล้วกดปุ่มนี้",
-                                   bg=PANEL, fg=MUTED, font=("Segoe UI", 9))
+                                   bg=PANEL, fg=MUTED, font=(UIFONT, 9))
         self.calib_hint.pack()
 
         # ปรับเส้น
@@ -364,7 +368,7 @@ class App(tk.Tk):
 
         # แถบล่าง
         self.status = tk.Label(self, text="พร้อม", bg="#15161c", fg=MUTED,
-                               anchor="w", font=("Segoe UI", 9))
+                               anchor="w", font=(UIFONT, 9))
         self.status.pack(fill="x", side="bottom", ipady=3)
 
     def _show_placeholder(self):
@@ -555,12 +559,12 @@ class App(tk.Tk):
         win.title("วิธีใช้ / ตั้งค่าเส้น")
         win.configure(bg=BG)
         win.geometry("560x620")
-        txt = tk.Text(win, bg=PANEL, fg=FG, font=("Segoe UI", 11), wrap="word",
+        txt = tk.Text(win, bg=PANEL, fg=FG, font=(UIFONT, 11), wrap="word",
                       relief="flat", padx=16, pady=14)
         txt.pack(fill="both", expand=True, padx=10, pady=10)
         txt.insert("end", HELP_TEXT)
         txt.configure(state="disabled")
-        tk.Button(win, text="ปิด", command=win.destroy, font=("Segoe UI", 11),
+        tk.Button(win, text="ปิด", command=win.destroy, font=(UIFONT, 11),
                   bg=ACCENT, fg="#0a1533", relief="flat", pady=6).pack(pady=(0, 10))
 
     def on_close(self):
