@@ -25,7 +25,7 @@ except Exception:
 from paths import resource_path
 from settings import Settings
 from camera import CameraStream, list_cameras
-from winfocus import target_focused
+from winfocus import target_focused, list_windows
 from pose_detector import PoseDetector
 from motion_logic import MotionLogic, STATE_JUMP, STATE_CROUCH, STATE_FLY
 from input_sender import InputSender
@@ -49,6 +49,9 @@ UIFONT = "Leelawadee UI"
 # ปุ่มที่เลือกส่งเข้าเกมได้
 KEY_CHOICES = ["space", "ctrl", "shift", "alt", "up", "down", "left", "right",
                "enter", "z", "x", "c", "a", "s", "d", "w", "q", "e", "f", "j", "k"]
+
+# ตัวเลือกแรกใน dropdown หน้าต่าง = ส่งทุกหน้าต่าง (ปิดการกรอง)
+SEND_ALL_LABEL = "(ทุกหน้าต่าง — ส่งตลอด)"
 
 
 def draw_lines(frame, logic):
@@ -250,6 +253,7 @@ class App(tk.Tk):
 
         self._build_ui()
         self.refresh_cameras()
+        self.refresh_windows()
         self.protocol("WM_DELETE_WINDOW", self.on_close)
         self.after(30, self._tick)
 
@@ -370,18 +374,17 @@ class App(tk.Tk):
                           state="readonly", width=10, font=f)
         cc.pack(side="left"); cc.bind("<<ComboboxSelected>>", self.on_key_change)
 
-        # หน้าต่างเป้าหมาย — ส่งปุ่มเฉพาะตอนหน้าต่างนี้ active (กันปุ่มรั่ว)
-        tw = tk.Frame(panel, bg=PANEL)
-        tw.pack(fill="x", padx=14, pady=(2, 0))
-        tk.Label(tw, text="ส่งปุ่มเฉพาะหน้าต่าง:", bg=PANEL, fg=MUTED,
-                 font=(UIFONT, 9)).pack(side="left")
-        self.target_win_var = tk.StringVar(value=self.s.TARGET_WINDOW)
-        te = tk.Entry(tw, textvariable=self.target_win_var, width=10, font=(UIFONT, 9),
-                      bg="#1e1f26", fg=FG, insertbackground=FG, relief="flat")
-        te.pack(side="left", padx=4)
-        te.bind("<KeyRelease>", self.on_target_change)
-        tk.Label(tw, text="(ว่าง = ส่งตลอด)", bg=PANEL, fg=MUTED,
-                 font=(UIFONT, 8)).pack(side="left")
+        # หน้าต่างเป้าหมาย — เลือกจาก dropdown (เหมือนเลือกกล้อง) กันปุ่มรั่ว
+        twf = tk.LabelFrame(panel, text=" ส่งปุ่มเข้าหน้าต่าง (กันรั่ว) ", bg=PANEL, fg=FG,
+                            font=f, labelanchor="n", bd=1)
+        twf.pack(fill="x", padx=14, pady=6)
+        tw = tk.Frame(twf, bg=PANEL)
+        tw.pack(fill="x", pady=3, padx=6)
+        self.target_combo = ttk.Combobox(tw, state="readonly", width=24, font=(UIFONT, 9))
+        self.target_combo.pack(side="left")
+        self.target_combo.bind("<<ComboboxSelected>>", self.on_target_select)
+        tk.Button(tw, text="↻", command=self.refresh_windows, font=fb,
+                  bg="#3a3d4a", fg=FG, relief="flat", width=3).pack(side="left", padx=4)
 
         # วิธีใช้
         tk.Button(panel, text="❓ วิธีใช้ / ตั้งค่าเส้น", command=self.show_help,
@@ -511,8 +514,28 @@ class App(tk.Tk):
         self.s.CROUCH_KEY = self.crouch_key_var.get()
         self.set_status(f"ปุ่ม: กระโดด={self.s.JUMP_KEY}  สไลด์={self.s.CROUCH_KEY}")
 
-    def on_target_change(self, _e=None):
-        self.s.TARGET_WINDOW = self.target_win_var.get().strip()
+    def refresh_windows(self):
+        """สแกนหน้าต่างที่เปิดอยู่ ใส่ใน dropdown (เลือกตัวที่ตรงกับค่าปัจจุบันไว้)"""
+        self._windows = list_windows()
+        values = [SEND_ALL_LABEL] + self._windows
+        cur = (self.s.TARGET_WINDOW or "").strip()
+        sel = 0
+        if cur:
+            match = next((i for i, t in enumerate(self._windows)
+                          if cur.lower() == t.lower()), None)
+            if match is not None:
+                sel = match + 1
+            else:
+                # ค่าปัจจุบัน (เช่น "MuMu") ไม่ตรงชื่อเต็มไหนเป๊ะ — โชว์ค่านี้ไว้ให้เห็นชัด
+                values.insert(1, cur)
+                sel = 1
+        self.target_combo["values"] = values
+        self.target_combo.current(sel)
+
+    def on_target_select(self, _e=None):
+        v = self.target_combo.get()
+        self.s.TARGET_WINDOW = "" if v == SEND_ALL_LABEL else v
+        self.set_status("ส่งปุ่มเข้าหน้าต่าง: " + (v if self.s.TARGET_WINDOW else "ทุกหน้าต่าง"))
 
     def set_status(self, text):
         self.status.configure(text="  " + text)
@@ -602,7 +625,7 @@ class App(tk.Tk):
         self.worker.sync_to_settings()
         self.s.JUMP_KEY = self.jump_key_var.get()
         self.s.CROUCH_KEY = self.crouch_key_var.get()
-        self.s.TARGET_WINDOW = self.target_win_var.get().strip()
+        # TARGET_WINDOW ถูกตั้งแล้วตอนเลือกใน dropdown
         self.worker.stop()
         self.s.save()
         self.destroy()
